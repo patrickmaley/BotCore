@@ -125,6 +125,12 @@ namespace creature {
 		int getAllThreatsList(lua_State* L);
 		int dropFromThreatMap(lua_State* L);
 		int getSkillMod(lua_State* L);
+		int addSkillMod(lua_State* L);
+		int startEntertainingDance(lua_State* L);
+		int startEntertainingMusic(lua_State* L);
+		int changeEntertainingPerformance(lua_State* L);
+		int doEntertainerFlourish(lua_State* L);
+		int formGroupWith(lua_State* L);
 		int getGender(lua_State* L);
 		int isRidingMount(lua_State* L);
 		int dismount(lua_State* L);

@@ -9,6 +9,7 @@
 #include "server/zone/objects/scene/SceneObject.h"
 #include "server/zone/objects/creature/CreatureObject.h"
 #include "server/zone/managers/group/GroupManager.h"
+#include "server/zone/objects/group/GroupObject.h"
 #include "server/zone/ZoneServer.h"
 
 class InviteCommand : public QueueCommand {
@@ -64,6 +65,37 @@ public:
 			return GENERALERROR;
 
 		if (!object->isPlayerCreature() && !object->isShipObject()) {
+			CreatureObject* npc = object->asCreatureObject();
+
+			if (npc != nullptr && (npc->isDancing() || npc->isPlayingMusic())) {
+				creature->unlock();
+
+				try {
+					groupManager->joinEntertainingNpcGroup(creature, npc);
+				} catch (...) {
+					creature->wlock();
+					throw;
+				}
+
+				creature->wlock();
+				return SUCCESS;
+			}
+
+			if (npc != nullptr && npc->getSkillMod("private_hospital_healer") > 0) {
+				creature->unlock();
+
+				try {
+					groupManager->joinNpcGroup(creature, npc);
+					groupManager->applyHospitalCare(creature, npc);
+				} catch (...) {
+					creature->wlock();
+					throw;
+				}
+
+				creature->wlock();
+				return SUCCESS;
+			}
+
 			return GENERALERROR;
 		}
 

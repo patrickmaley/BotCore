@@ -1585,8 +1585,10 @@ Reference<ChatRoom*> ChatManagerImplementation::createGroupRoom(uint64 groupID, 
 
 	groupLocker.release();
 
-	groupChatRoom->sendTo(creator);
-	handleChatEnterRoomById(creator, groupChatRoom->getRoomID(), -1, true);
+	if (creator->isPlayerCreature()) {
+		groupChatRoom->sendTo(creator);
+		handleChatEnterRoomById(creator, groupChatRoom->getRoomID(), -1, true);
+	}
 
 	return groupChatRoom;
 }

@@ -579,6 +579,13 @@ class PlayerManager extends Observer implements Logger {
 	public native void enhanceCharacter(CreatureObject player);
 
 	/**
+	 * Enhances the target character with medical buffs only
+	 * @pre { player is locked }
+	 * @post { player is locked }
+	 */
+	public native void enhanceCharacterMedical(CreatureObject player);
+
+	/**
 	 * Creates and adds buff to Player
 	 * @pre { player is locked }
 	 * @post { player is locked }

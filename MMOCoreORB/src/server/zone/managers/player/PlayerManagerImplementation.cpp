@@ -3379,12 +3379,12 @@ void PlayerManagerImplementation::stopListen(CreatureObject* creature, uint64 en
 		return;
 	}
 
-	if (!object->isPlayerCreature()) {
+	if (!object->isCreatureObject()) {
 		creature->sendSystemMessage("@performance:music_listen_npc"); // "You cannot /listen to NPCs."
 		return;
 	}
 
-	CreatureObject* entertainer = cast<CreatureObject*>( object.get());
+	CreatureObject* entertainer = object->asCreatureObject();
 
 	if (entertainer == creature)
 		return;
@@ -3431,7 +3431,7 @@ void PlayerManagerImplementation::stopListen(CreatureObject* creature, uint64 en
 			// The correct string id is @performance:music_listen_out_of_range ("You stop listening to %TT because %OT is too far away.")
 			// but %OT will get replaced by him/her which gives an incorrect message.
 			StringBuffer msg;
-			msg << "You stop listening to " << entertainer->getFirstName() << " because they are too far away.";
+			msg << "You stop listening to " << entertainer->getDisplayedName() << " because they are too far away.";
 			player->sendSystemMessage(msg.toString());
 		} else {
 			player->sendSystemMessage("@performance:music_listen_stop_self"); // "You stop listening."
@@ -3466,12 +3466,12 @@ void PlayerManagerImplementation::stopWatch(CreatureObject* creature, uint64 ent
 	if (object == nullptr)
 		return;
 
-	if (!object->isPlayerCreature()) {
+	if (!object->isCreatureObject()) {
 		creature->sendSystemMessage("@performance:dance_watch_npc"); // "You cannot /watch NPCs."
 		return;
 	}
 
-	CreatureObject* entertainer = cast<CreatureObject*>( object.get());
+	CreatureObject* entertainer = object->asCreatureObject();
 
 	if (entertainer == creature)
 		return;
@@ -3519,7 +3519,7 @@ void PlayerManagerImplementation::stopWatch(CreatureObject* creature, uint64 ent
 			// The correct string id is @performance:dance_watch_out_of_range ("You stop watching %TT because %OT is too far away.")
 			// but %OT will get replaced by him/her which gives an incorrect message.
 			StringBuffer msg;
-			msg << "You stop watching " << entertainer->getFirstName() << " because they are too far away.";
+			msg << "You stop watching " << entertainer->getDisplayedName() << " because they are too far away.";
 			player->sendSystemMessage(msg.toString());
 		} else {
 			player->sendSystemMessage("@performance:dance_watch_stop_self"); //"You stop watching."
@@ -3553,7 +3553,7 @@ void PlayerManagerImplementation::startWatch(CreatureObject* creature, uint64 en
 	if (object == nullptr)
 		return;
 
-	if (!object->isPlayerCreature()) {
+	if (!object->isPlayerCreature() && !object->isCreatureObject()) {
 		creature->sendSystemMessage("@performance:dance_watch_npc"); // "You can not /watch NPCs."
 		return;
 	}
@@ -3681,7 +3681,7 @@ void PlayerManagerImplementation::startListen(CreatureObject* creature, uint64 e
 		return;
 	}
 
-	if (!object->isPlayerCreature()) {
+	if (!object->isPlayerCreature() && !object->isCreatureObject()) {
 		creature->sendSystemMessage("@performance:music_listen_npc"); // "You cannot /listen to NPCs."
 		return;
 	}
@@ -6682,6 +6682,23 @@ void PlayerManagerImplementation::enhanceCharacter(CreatureObject* player) {
 
 	if (message && player->isPlayerCreature())
 		player->sendSystemMessage("An unknown force strengthens you for battles yet to come.");
+}
+
+void PlayerManagerImplementation::enhanceCharacterMedical(CreatureObject* player) {
+	if (player == nullptr)
+		return;
+
+	bool message = true;
+
+	message = message && doEnhanceCharacter(0x98321369, player, medicalBuff, medicalDuration, BuffType::MEDICAL, 0); // medical_enhance_health
+	message = message && doEnhanceCharacter(0x815D85C5, player, medicalBuff, medicalDuration, BuffType::MEDICAL, 1); // medical_enhance_strength
+	message = message && doEnhanceCharacter(0x7F86D2C6, player, medicalBuff, medicalDuration, BuffType::MEDICAL, 2); // medical_enhance_constitution
+	message = message && doEnhanceCharacter(0x4BF616E2, player, medicalBuff, medicalDuration, BuffType::MEDICAL, 3); // medical_enhance_action
+	message = message && doEnhanceCharacter(0x71B5C842, player, medicalBuff, medicalDuration, BuffType::MEDICAL, 4); // medical_enhance_quickness
+	message = message && doEnhanceCharacter(0xED0040D9, player, medicalBuff, medicalDuration, BuffType::MEDICAL, 5); // medical_enhance_stamina
+
+	if (message && player->isPlayerCreature())
+		player->sendSystemMessage("You have been medically enhanced.");
 }
 
 void PlayerManagerImplementation::sendAdminJediList(CreatureObject* player) {

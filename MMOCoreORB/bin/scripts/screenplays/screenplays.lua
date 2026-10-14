@@ -585,6 +585,8 @@ includeFile("caves/tatooine_tusken_bunker.lua")
 -- Cantinas
 includeFile("cities/cantinas/bartenders.lua")
 includeFile("cities/cantinas/bartender_conv_handler.lua")
+includeFile("cities/cantinas/coronet_cantina_band.lua")
+includeFile("cities/cantinas/coronet_hospital_medic.lua")
 
 -- Cities
 includeFile("cities/city.lua")

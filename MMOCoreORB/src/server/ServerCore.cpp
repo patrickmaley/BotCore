@@ -24,6 +24,7 @@
 #include "server/zone/managers/object/ObjectManager.h"
 #include "templates/manager/TemplateManager.h"
 #include "server/zone/managers/player/PlayerManager.h"
+#include "server/zone/managers/playerbots/PlayerbotManager.h"
 #include "server/zone/managers/director/DirectorManager.h"
 #include "server/zone/managers/collision/NavMeshManager.h"
 #include "server/zone/managers/name/NameManager.h"
@@ -232,6 +233,149 @@ void ServerCore::registerConsoleCommmands() {
 
 		return SUCCESS;
 	});
+
+	addCommand("createbot", [this](const String& arguments) -> CommandResult {
+        String botName = "TestBot";
+
+        StringTokenizer tokenizer(arguments);
+        if (tokenizer.hasMoreTokens()) {
+            botName = tokenizer.getStringToken();
+        }
+
+        try {
+            ManagedReference<CreatureObject*> bot =
+                server::zone::managers::playerbots::PlayerbotManager::instance()->createBot(botName);
+
+            if (bot != nullptr) {
+                System::out << "Bot created successfully: " << botName << endl;
+                return SUCCESS;
+            }
+
+            System::out << "Failed to create bot: " << botName << endl;
+            return ERROR;
+        } catch (const Exception& e) {
+            System::out << "Exception while creating bot: " << e.getMessage() << endl;
+            return ERROR;
+        }
+    });
+
+	addCommand("botstay", [this](const String& arguments) -> CommandResult {
+        String botName = arguments.trim();
+        if (botName.isEmpty()) {
+            System::out << "Usage: botstay <botName>" << endl;
+            return ERROR;
+        }
+
+        if (server::zone::managers::playerbots::PlayerbotManager::instance()->makeBotStay(botName)) {
+            System::out << "Bot staying: " << botName << endl;
+            return SUCCESS;
+        }
+
+        System::out << "Failed to set stay for bot: " << botName << endl;
+        return ERROR;
+    });
+
+	addCommand("botfollow", [this](const String& arguments) -> CommandResult {
+        StringTokenizer tokenizer(arguments);
+        String botName;
+
+        if (!tokenizer.hasMoreTokens()) {
+            System::out << "Usage: botfollow <botName> [playerName]" << endl;
+            return ERROR;
+        }
+
+        botName = tokenizer.getStringToken();
+
+        ZoneServer* zoneServer = zoneServerRef.get();
+        if (zoneServer == nullptr)
+            return ERROR;
+
+        ManagedReference<CreatureObject*> master = nullptr;
+
+        if (tokenizer.hasMoreTokens()) {
+            String playerName = tokenizer.getStringToken();
+            master = zoneServer->getPlayerManager()->getPlayer(playerName);
+        } 
+
+        if (master == nullptr) {
+            System::out << "No target player found to follow" << endl;
+            return ERROR;
+        }
+
+        if (server::zone::managers::playerbots::PlayerbotManager::instance()->makeBotFollow(botName, master)) {
+            System::out << "Bot " << botName << " following " << master->getFirstName() << " and joining group" << endl;
+            return SUCCESS;
+        }
+
+        System::out << "Failed to set follow for bot: " << botName << endl;
+        return ERROR;
+    });
+
+	addCommand("botgroup", [this](const String& arguments) -> CommandResult {
+		StringTokenizer tokenizer(arguments);
+		String botName;
+
+		if (!tokenizer.hasMoreTokens()) {
+			System::out << "Usage: botgroup <botName> <playerName>" << endl;
+			return ERROR;
+		}
+
+		botName = tokenizer.getStringToken();
+
+		ZoneServer* zoneServer = zoneServerRef.get();
+		if (zoneServer == nullptr)
+			return ERROR;
+
+		if (!tokenizer.hasMoreTokens()) {
+			System::out << "Usage: botgroup <botName> <playerName>" << endl;
+			return ERROR;
+		}
+
+		String playerName = tokenizer.getStringToken();
+		ManagedReference<CreatureObject*> master = zoneServer->getPlayerManager()->getPlayer(playerName);
+
+		if (master == nullptr) {
+			System::out << "No player found: " << playerName << endl;
+			return ERROR;
+		}
+
+		if (server::zone::managers::playerbots::PlayerbotManager::instance()->makeBotJoinGroup(botName, master)) {
+			System::out << "Bot " << botName << " joined group of " << master->getFirstName() << endl;
+			return SUCCESS;
+		}
+
+		System::out << "Failed to add bot to group: " << botName << endl;
+		return ERROR;
+	});
+
+	 addCommand("botassist", [this](const String& arguments) -> CommandResult {
+        StringTokenizer tokenizer(arguments);
+        String botName;
+        String mode;
+
+        if (!tokenizer.hasMoreTokens()) {
+            System::out << "Usage: botassist <botName> <on|off>" << endl;
+            return ERROR;
+        }
+
+        botName = tokenizer.getStringToken();
+
+        if (!tokenizer.hasMoreTokens()) {
+            System::out << "Usage: botassist <botName> <on|off>" << endl;
+            return ERROR;
+        }
+
+        mode = tokenizer.getStringToken().toLowerCase();
+        bool enabled = (mode == "on" || mode == "1" || mode == "true");
+
+        if (server::zone::managers::playerbots::PlayerbotManager::instance()->setBotAssist(botName, enabled)) {
+            System::out << "Bot " << botName << " assist " << (enabled ? "ON" : "OFF") << endl;
+            return SUCCESS;
+        }
+
+        System::out << "Failed to set assist for bot: " << botName << endl;
+        return ERROR;
+    });
 
 	addCommand("chars", [this](const String& arguments) -> CommandResult {
 		ZoneServer* zoneServer = zoneServerRef.getForUpdate();

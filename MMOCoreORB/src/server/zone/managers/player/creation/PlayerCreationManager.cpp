@@ -533,12 +533,12 @@ bool PlayerCreationManager::createCharacter(ClientCreateCharacterCallback* callb
 	try {
 		StringBuffer query;
 		query
-				<< "INSERT INTO `characters_dirty` (`character_oid`, `account_id`, `galaxy_id`, `firstname`, `surname`, `race`, `gender`, `template`)"
+				<< "INSERT INTO `characters_dirty` (`character_oid`, `account_id`, `galaxy_id`, `firstname`, `surname`, `race`, `gender`, `template`, `creation_date`)"
 				<< " VALUES (" << playerCreature->getObjectID() << ","
 				<< client->getAccountID() << "," << zoneServer.get()->getGalaxyID()
 				<< "," << "'" << firstName.escapeString() << "','"
 				<< lastName.escapeString() << "'," << raceID << "," << 0 << ",'"
-				<< raceFile.escapeString() << "')";
+				<< raceFile.escapeString() << "', NOW())";
 
 		ServerDatabase::instance()->executeStatement(query);
 	} catch (const DatabaseException& e) {

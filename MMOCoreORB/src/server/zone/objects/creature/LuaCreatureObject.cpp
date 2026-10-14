@@ -16,6 +16,10 @@
 #include "server/zone/objects/player/PlayerObject.h"
 #include "server/zone/managers/player/PlayerManager.h"
 #include "server/zone/managers/skill/SkillManager.h"
+#include "server/zone/managers/skill/SkillModManager.h"
+#include "server/zone/managers/skill/PerformanceManager.h"
+#include "server/zone/managers/group/GroupManager.h"
+#include "server/zone/objects/tangible/Instrument.h"
 #include "server/zone/objects/tangible/threat/ThreatMap.h"
 #include "server/zone/objects/transaction/TransactionLog.h"
 #include "server/zone/Zone.h"
@@ -157,6 +161,12 @@ Luna<LuaCreatureObject>::RegType LuaCreatureObject::Register[] = {
 		{ "getAllThreatsList", &LuaCreatureObject::getAllThreatsList },
 		{ "dropFromThreatMap", &LuaCreatureObject::dropFromThreatMap },
 		{ "getSkillMod", &LuaCreatureObject::getSkillMod },
+		{ "addSkillMod", &LuaCreatureObject::addSkillMod },
+		{ "startEntertainingDance", &LuaCreatureObject::startEntertainingDance },
+		{ "startEntertainingMusic", &LuaCreatureObject::startEntertainingMusic },
+		{ "changeEntertainingPerformance", &LuaCreatureObject::changeEntertainingPerformance },
+		{ "doEntertainerFlourish", &LuaCreatureObject::doEntertainerFlourish },
+		{ "formGroupWith", &LuaCreatureObject::formGroupWith },
 		{ "getGender", &LuaCreatureObject::getGender },
 		{ "isRidingMount", &LuaCreatureObject::isRidingMount },
 		{ "dismount", &LuaCreatureObject::dismount },
@@ -1237,6 +1247,203 @@ int LuaCreatureObject::getSkillMod(lua_State* L) {
 
 	lua_pushnumber(L, result);
 
+	return 1;
+}
+
+int LuaCreatureObject::addSkillMod(lua_State* L) {
+	int value = lua_tointeger(L, -1);
+	String skillMod = lua_tostring(L, -2);
+
+	Locker locker(realObject);
+	realObject->addSkillMod(SkillModManager::PERMANENTMOD, skillMod, value, true);
+	return 0;
+}
+
+int LuaCreatureObject::startEntertainingDance(lua_State* L) {
+	String danceName = lua_tostring(L, -1);
+
+	Locker locker(realObject);
+
+	PerformanceManager* performanceManager = SkillManager::instance()->getPerformanceManager();
+
+	if (performanceManager == nullptr) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	int performanceIndex = performanceManager->getPerformanceIndex(PerformanceType::DANCE, danceName, 0);
+
+	if (performanceIndex == 0) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	ManagedReference<Facade*> facade = realObject->getActiveSession(SessionFacadeType::ENTERTAINING);
+	ManagedReference<EntertainingSession*> session = dynamic_cast<EntertainingSession*>(facade.get());
+
+	if (session == nullptr) {
+		session = new EntertainingSession(realObject);
+		realObject->addActiveSession(SessionFacadeType::ENTERTAINING, session);
+	}
+
+	session->startDancing(performanceIndex);
+	lua_pushboolean(L, true);
+	return 1;
+}
+
+int LuaCreatureObject::startEntertainingMusic(lua_State* L) {
+	String songName = lua_tostring(L, -1);
+
+	Locker locker(realObject);
+
+	ManagedReference<Instrument*> instrument = realObject->getPlayableInstrument();
+
+	if (instrument == nullptr) {
+		ZoneServer* zoneServer = realObject->getZoneServer();
+
+		if (zoneServer == nullptr) {
+			lua_pushboolean(L, false);
+			return 1;
+		}
+
+		ManagedReference<SceneObject*> instObj = zoneServer->createObject(String("object/tangible/instrument/slitherhorn.iff").hashCode(), 0);
+
+		if (instObj == nullptr || !instObj->isInstrument()) {
+			lua_pushboolean(L, false);
+			return 1;
+		}
+
+		Locker clocker(instObj, realObject);
+
+		if (!realObject->transferObject(instObj, 4, true)) {
+			instObj->destroyObjectFromWorld(true);
+			lua_pushboolean(L, false);
+			return 1;
+		}
+
+		instrument = instObj.castTo<Instrument*>();
+	}
+
+	if (instrument == nullptr) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	PerformanceManager* performanceManager = SkillManager::instance()->getPerformanceManager();
+
+	if (performanceManager == nullptr) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	int performanceIndex = performanceManager->getPerformanceIndex(PerformanceType::MUSIC, songName, instrument->getInstrumentType());
+
+	if (performanceIndex == 0) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	ManagedReference<Facade*> facade = realObject->getActiveSession(SessionFacadeType::ENTERTAINING);
+	ManagedReference<EntertainingSession*> session = dynamic_cast<EntertainingSession*>(facade.get());
+
+	if (session == nullptr) {
+		session = new EntertainingSession(realObject);
+		realObject->addActiveSession(SessionFacadeType::ENTERTAINING, session);
+	}
+
+	session->startPlayingMusic(performanceIndex, instrument);
+	lua_pushboolean(L, true);
+	return 1;
+}
+
+int LuaCreatureObject::changeEntertainingPerformance(lua_State* L) {
+	String performanceName = lua_tostring(L, -1);
+
+	Locker locker(realObject);
+
+	ManagedReference<EntertainingSession*> session = realObject->getActiveSession(SessionFacadeType::ENTERTAINING).castTo<EntertainingSession*>();
+
+	if (session == nullptr) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	PerformanceManager* performanceManager = SkillManager::instance()->getPerformanceManager();
+
+	if (performanceManager == nullptr) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	int performanceIndex = 0;
+
+	if (session->isDancing()) {
+		performanceIndex = performanceManager->getPerformanceIndex(PerformanceType::DANCE, performanceName, 0);
+	} else if (session->isPlayingMusic()) {
+		ManagedReference<Instrument*> instrument = realObject->getPlayableInstrument();
+
+		if (instrument == nullptr) {
+			lua_pushboolean(L, false);
+			return 1;
+		}
+
+		performanceIndex = performanceManager->getPerformanceIndex(PerformanceType::MUSIC, performanceName, instrument->getInstrumentType());
+	}
+
+	if (performanceIndex == 0) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	session->sendEntertainingUpdate(realObject, performanceIndex, true);
+	lua_pushboolean(L, true);
+	return 1;
+}
+
+int LuaCreatureObject::doEntertainerFlourish(lua_State* L) {
+	int flourishNumber = lua_tointeger(L, -1);
+
+	Locker locker(realObject);
+
+	ManagedReference<EntertainingSession*> session = realObject->getActiveSession(SessionFacadeType::ENTERTAINING).castTo<EntertainingSession*>();
+
+	if (session == nullptr) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	session->doFlourish(flourishNumber, false);
+	lua_pushboolean(L, true);
+	return 1;
+}
+
+int LuaCreatureObject::formGroupWith(lua_State* L) {
+	CreatureObject* other = (CreatureObject*) lua_touserdata(L, -1);
+
+	if (realObject == nullptr || other == nullptr || realObject == other) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	{
+		Locker locker(realObject);
+		Locker clocker(other, realObject);
+
+		if (realObject->isGrouped() && other->isGrouped() && realObject->getGroup() == other->getGroup()) {
+			lua_pushboolean(L, true);
+			return 1;
+		}
+
+		if (other->isGrouped()) {
+			lua_pushboolean(L, false);
+			return 1;
+		}
+
+		other->updateGroupInviterID(realObject->getObjectID(), false);
+	}
+
+	GroupManager::instance()->joinGroup(other);
+	lua_pushboolean(L, other->getGroup() != nullptr);
 	return 1;
 }
 

@@ -27,6 +27,7 @@
 #include "server/zone/packets/object/OpenLotteryWindow.h"
 #include "server/zone/objects/player/sessions/LootLotterySession.h"
 #include "server/zone/packets/group/GroupObjectDeltaMessage6.h"
+#include "templates/params/creature/CreatureAttribute.h"
 
 // #define DEBUG_GROUPS
 
@@ -182,7 +183,7 @@ void GroupManager::joinGroup(CreatureObject* creature) {
 
 	ManagedReference<SceneObject*> object = zoneServer->getObject(inviterID);
 
-	if (object == nullptr || !object->isPlayerCreature() || object->getObjectID() == creature->getObjectID())
+	if (object == nullptr || !object->isCreatureObject() || object->getObjectID() == creature->getObjectID())
 		return;
 
 	auto leader = object->asCreatureObject();
@@ -313,7 +314,8 @@ void GroupManager::createGroup(CreatureObject* leader, CreatureObject* creature)
 	group->startChatRoom(leader);
 
 	// Send Baselines
-	group->sendTo(leader, true);
+	if (leader->isPlayerCreature())
+		group->sendTo(leader, true);
 
 	// Remove Leader LFG bit
 	auto leaderGhost = leader->getPlayerObject();
@@ -576,6 +578,130 @@ void GroupManager::makeLeader(GroupObject* group, CreatureObject* leader, Creatu
 		group->makeLeader(newLeader);
 	} catch (...) {
 		throw;
+	}
+}
+
+void GroupManager::joinEntertainingNpcGroup(CreatureObject* player, CreatureObject* npc) {
+	if (player == nullptr || npc == nullptr)
+		return;
+
+	if (!npc->isDancing() && !npc->isPlayingMusic())
+		return;
+
+	joinNpcGroup(player, npc);
+}
+
+void GroupManager::joinNpcGroup(CreatureObject* player, CreatureObject* npc) {
+	if (player == nullptr || npc == nullptr)
+		return;
+
+	ManagedReference<GroupObject*> npcGroup = npc->getGroup();
+
+	if (npcGroup == nullptr && npc->getGroupInviterID() != 0)
+		joinGroup(npc);
+
+	npcGroup = npc->getGroup();
+
+	if (npcGroup == nullptr) {
+		Locker nlock(npc);
+		npc->updateGroupInviterID(0, false);
+	}
+
+	if (npcGroup != nullptr) {
+		if (player->getGroup() == npcGroup)
+			return;
+
+		if (player->isGrouped()) {
+			Locker plock(player);
+			player->sendSystemMessage("You must leave your current group before joining.");
+			return;
+		}
+
+		Locker glock(npcGroup);
+		Locker clocker(player, npcGroup);
+
+		if (npcGroup->hasMember(player))
+			return;
+
+		if (npcGroup->getGroupSize() >= 20) {
+			player->sendSystemMessage("@group:full");
+			return;
+		}
+
+		npcGroup->addMember(player);
+		player->updateGroup(npcGroup);
+		player->updateGroupInviterID(0, false);
+		npcGroup->updatePvPStatusNearCreature(player);
+		npcGroup->makeLeader(player);
+
+		player->sendSystemMessage("@group:joined_self");
+
+		auto zoneServer = player->getZoneServer();
+
+		if (zoneServer != nullptr) {
+			ManagedReference<ChatRoom*> groupChat = npcGroup->getChatRoom();
+			ChatManager* chatMan = zoneServer->getChatManager();
+
+			if (groupChat != nullptr && chatMan != nullptr) {
+				groupChat->sendTo(player);
+				chatMan->handleChatEnterRoomById(player, groupChat->getRoomID(), -1, true);
+			}
+		}
+
+		return;
+	}
+
+	{
+		Locker lock(player);
+		inviteToGroup(player, npc);
+	}
+
+	joinGroup(npc);
+}
+
+void GroupManager::applyHospitalCare(CreatureObject* player, CreatureObject* medic) {
+	if (player == nullptr || medic == nullptr)
+		return;
+
+	if (!player->isInRange(medic, 16.f)) {
+		Locker plock(player);
+		player->sendSystemMessage("You are too far away to receive treatment.");
+		return;
+	}
+
+	{
+		Locker plock(player);
+
+		for (int i = 0; i < CreatureAttribute::ARRAYSIZE; ++i)
+			player->setWounds(i, 0, true);
+
+		player->setShockWounds(0, true);
+		player->sendSystemMessage("Your wounds have been treated.");
+
+		player->healDamage(player, CreatureAttribute::HEALTH, player->getMaxHAM(CreatureAttribute::HEALTH), true, true);
+		player->healDamage(player, CreatureAttribute::ACTION, player->getMaxHAM(CreatureAttribute::ACTION), true, true);
+		player->healDamage(player, CreatureAttribute::MIND, player->getMaxHAM(CreatureAttribute::MIND), true, true);
+		player->sendSystemMessage("You have been healed.");
+
+		auto zoneServer = player->getZoneServer();
+
+		if (zoneServer != nullptr) {
+			PlayerManager* playerManager = zoneServer->getPlayerManager();
+
+			if (playerManager != nullptr)
+				playerManager->enhanceCharacterMedical(player);
+		}
+	}
+
+	auto zoneServer = medic->getZoneServer();
+
+	if (zoneServer != nullptr) {
+		ChatManager* chatManager = zoneServer->getChatManager();
+
+		if (chatManager != nullptr) {
+			Locker nlock(medic);
+			chatManager->broadcastChatMessage(medic, UnicodeString("Hold still... there. You're treated, healed, and enhanced."), 0, 0, medic->getMoodID());
+		}
 	}
 }
 

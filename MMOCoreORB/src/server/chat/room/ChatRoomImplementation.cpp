@@ -50,6 +50,9 @@ void ChatRoomImplementation::sendDestroyTo(CreatureObject* player) {
 }
 
 void ChatRoomImplementation::addPlayer(CreatureObject* player) {
+	if (player == nullptr || !player->isPlayerCreature())
+		return;
+
 	Locker locker(_this.getReferenceUnsafeStaticCast());
 
 	playerList.put(player->getFirstName(), player);
@@ -59,7 +62,9 @@ void ChatRoomImplementation::addPlayer(CreatureObject* player) {
 
 	Locker plocker(player);
 	PlayerObject* ghost = player->getPlayerObject();
-	ghost->addChatRoom(getRoomID());
+
+	if (ghost != nullptr)
+		ghost->addChatRoom(getRoomID());
 }
 
 void ChatRoomImplementation::removePlayer(CreatureObject* player, bool disconnecting) {

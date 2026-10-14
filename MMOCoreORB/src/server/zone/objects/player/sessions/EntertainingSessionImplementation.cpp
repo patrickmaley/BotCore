@@ -84,6 +84,23 @@ void EntertainingSessionImplementation::doEntertainerPatronEffects() {
 
 	healWounds(creo, woundHeal * (flourishCount + 1), shockHeal * (flourishCount + 1));
 
+	ManagedReference<GroupObject*> group = creo->getGroup();
+
+	if (group != nullptr) {
+		for (int i = 0; i < group->getGroupSize(); ++i) {
+			ManagedReference<CreatureObject*> member = group->getGroupMember(i);
+
+			if (member == nullptr || member == creo || !member->isPlayerCreature())
+				continue;
+
+			if (!creo->isInRange(member, PerformanceManager::HEAL_RANGE))
+				continue;
+
+			if (!patronDataMap.contains(member))
+				addPatron(member);
+		}
+	}
+
 	if (patronDataMap.size() <= 0)
 		return;
 
@@ -260,6 +277,9 @@ void EntertainingSessionImplementation::doPerformanceAction() {
 		cancelSession();
 		return;
 	}
+
+	if (!entertainer->isPlayerCreature())
+		return;
 
 	int actionDrain = entertainer->calculateCostAdjustment(CreatureAttribute::QUICKNESS, performance->getActionPointsPerLoop());
 
@@ -655,10 +675,10 @@ void EntertainingSessionImplementation::doFlourish(int flourishNumber, bool gran
 
 	int actionDrain = (int)round((flourishActionDrain * 10 + 0.5) / 10.0); // Round to nearest dec for actual int cost
 
-	if (entertainer->getHAM(CreatureAttribute::ACTION) <= actionDrain) {
+	if (entertainer->isPlayerCreature() && entertainer->getHAM(CreatureAttribute::ACTION) <= actionDrain) {
 		entertainer->sendSystemMessage("@performance:flourish_too_tired");
 	} else {
-		if (actionDrain > 0)
+		if (actionDrain > 0 && entertainer->isPlayerCreature())
 			entertainer->inflictDamage(entertainer, CreatureAttribute::ACTION, actionDrain, false, true);
 
 		if (isDancing()) {
@@ -848,16 +868,21 @@ void EntertainingSessionImplementation::sendEntertainingUpdate(CreatureObject* c
 void EntertainingSessionImplementation::activateEntertainerBuff(CreatureObject* creature, int performanceType) {
 	ManagedReference<CreatureObject*> entertainer = this->entertainer.get();
 
+	if (entertainer == nullptr || creature == nullptr)
+		return;
+
 	try {
 		//Check if on Deny Service list
 		if (isInDenyServiceList(creature))
 			return;
 
+		Locker clocker(creature, entertainer);
+
 		ManagedReference<PlayerObject*> entPlayer = entertainer->getPlayerObject();
-		//Check if the patron is a valid buff target
-		//Whether it be passive(in the same group) or active (/setPerform target)
-		if ((!entertainer->isGrouped() || entertainer->getGroupID() != creature->getGroupID()) && entPlayer->getPerformanceBuffTarget() != creature->getObjectID())
-			return;
+		if (entPlayer != nullptr) {
+			if ((!entertainer->isGrouped() || entertainer->getGroupID() != creature->getGroupID()) && entPlayer->getPerformanceBuffTarget() != creature->getObjectID())
+				return;
+		}
 
 		if (creature->isIncapacitated() || creature->isDead()) {
 			return;
@@ -984,10 +1009,10 @@ void EntertainingSessionImplementation::increaseEntertainerBuff(CreatureObject* 
 		return;
 
 	ManagedReference<PlayerObject*> entPlayer = entertainer->getPlayerObject();
-	//Check if the patron is a valid buff target
-	//Whether it be passive(in the same group) or active (/setPerform target)
-	if ((!entertainer->isGrouped() || entertainer->getGroupID() != patron->getGroupID()) && entPlayer->getPerformanceBuffTarget() != patron->getObjectID())
-		return;
+	if (entPlayer != nullptr) {
+		if ((!entertainer->isGrouped() || entertainer->getGroupID() != patron->getGroupID()) && entPlayer->getPerformanceBuffTarget() != patron->getObjectID())
+			return;
+	}
 
 	if (isInDenyServiceList(patron))
 		return;
@@ -995,7 +1020,13 @@ void EntertainingSessionImplementation::increaseEntertainerBuff(CreatureObject* 
 	float buffAcceleration = 1 + ((float)entertainer->getSkillMod("accelerate_entertainer_buff") / 100.f);
 
 	addEntertainerBuffDuration(patron, performance->getType(), 2.0f * buffAcceleration);
-	addEntertainerBuffStrength(patron, performance->getType(), performance->getHealShockWound());
+
+	float strengthAdd = performance->getHealShockWound();
+
+	if (strengthAdd < 2.0f)
+		strengthAdd = 2.0f;
+
+	addEntertainerBuffStrength(patron, performance->getType(), strengthAdd);
 
 }
 

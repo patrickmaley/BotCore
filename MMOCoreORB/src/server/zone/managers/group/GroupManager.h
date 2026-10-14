@@ -94,6 +94,9 @@ public:
 	void disbandGroup(ManagedReference<GroupObject*> group, CreatureObject* player);
 
 	void joinGroupEntertainingSession(CreatureObject* player);
+	void joinEntertainingNpcGroup(CreatureObject* player, CreatureObject* npc);
+	void joinNpcGroup(CreatureObject* player, CreatureObject* npc);
+	void applyHospitalCare(CreatureObject* player, CreatureObject* medic);
 };
 
 #endif /*GROUPMANAGER_H_*/
