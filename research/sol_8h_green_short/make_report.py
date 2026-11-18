@@ -177,6 +177,12 @@ def main() -> None:
       f"{pc(dg.tp_share)} of green candles and {pc(dr.tp_share)} of red candles.")
     A(f"- Before costs the idea earned {bps(dg0['mean'])} bps per trade on discovery data "
       f"(95% interval {bps(dg0.ci_lo)} to {bps(dg0.ci_hi)}). That is not distinguishable from zero and is far below a 12 bps fee.")
+    vv = {v: one(gc, venue=v, period=CONF, x=X, cost=BASE_COST_BPS) for v in ("binance", "okx", "kucoin")}
+    assert all(r.ci_lo < 0 < r.ci_hi for r in vv.values())
+    A("- The venues do not agree on the sign of that confirmation number. Same rule, same X, same 12 bps: "
+      + ", ".join(f"{n} {bps(vv[v]['mean'])} bps ({bps(vv[v].ci_lo)} to {bps(vv[v].ci_hi)})"
+                  for v, n in (("binance", "Binance"), ("okx", "OKX"), ("kucoin", "KuCoin")))
+      + ". A mean that changes sign with the exchange the candles come from cannot be told apart from zero.")
     A(f"- SOL fell {pc(-CONF_BH, 1)} over the confirmation window. Every short had that tailwind and the idea still did not clear costs.")
     A(f"- Break-even round-trip cost at X = {X:g}%: about {dg0['mean'] * 1e4:.0f} bps on discovery data and {cg0['mean'] * 1e4:.0f} bps on the last 90 days. "
       f"Jupiter charges 12 before borrow and price impact.")
@@ -397,7 +403,10 @@ def main() -> None:
     A(table(["Sample", "Venue", "Strategy", "Signals"] + [f"X = {x:g}%" for x in X_GRID], rows))
     A("")
     A("OKX starts in September 2020 and KuCoin in August 2021, so their discovery samples are shorter than Binance's. "
-      "No venue turns the discovery result positive at any X.\n")
+      "No venue turns the discovery result positive at any X. On the last 90 days the locked X is "
+      + ", ".join(f"{bps(vv[v]['mean'])} bps on {n}" for v, n in (("binance", "Binance"), ("okx", "OKX"), ("kucoin", "KuCoin")))
+      + f". The venues disagree on at most {pc(ven[(ven['sample'] == 'confirmation') & (ven.x == X)].disagree_share.max(), 1)} of those fills, "
+        "and that handful of fills plus slightly different closing prices is enough to move the mean across zero.\n")
 
     A(f"## How far price rose against the short before exit, X = {X:g}%\n")
     A("From Binance 1m candles. Adverse move = highest price reached before the exit, relative to entry. For a take-profit fill the "

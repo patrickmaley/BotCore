@@ -15,6 +15,7 @@ Locked X = 1% on the last 90 days, after 12 bps, Binance spot, entry at C's clos
 - It did beat all four baselines on the last 90 days, but the margin over the red short, +17.7 bps, has a 95% interval of -14.5 to +50.0 bps, and the sign is the opposite of discovery, where the green short was 3.0 bps worse than the red short and worse than it at 7 of 7 X values.
 - The dip is not specific to green candles. On discovery data the next candle traded 1% below the close after 68.2% of green candles and 68.2% of red candles.
 - Before costs the idea earned +2.0 bps per trade on discovery data (95% interval -5.1 to +9.1). That is not distinguishable from zero and is far below a 12 bps fee.
+- The venues do not agree on the sign of that confirmation number. Same rule, same X, same 12 bps: Binance -0.6 bps (-22.5 to +21.3), OKX -2.0 bps (-24.2 to +20.2), KuCoin +1.6 bps (-19.9 to +23.2). A mean that changes sign with the exchange the candles come from cannot be told apart from zero.
 - SOL fell 15.9% over the confirmation window. Every short had that tailwind and the idea still did not clear costs.
 - Break-even round-trip cost at X = 1%: about 2 bps on discovery data and 11 bps on the last 90 days. Jupiter charges 12 before borrow and price impact.
 
@@ -540,7 +541,7 @@ On discovery data Binance fills slightly more often than the other venue at ever
 | Last 365d | KuCoin | Green short (the idea) | 536 | -8.0 | -7.3 | -4.6 | -3.2 | -4.8 | -1.9 | -1.8 |
 | Last 365d | KuCoin | Red short | 557 | -13.9 | -12.4 | -11.6 | -11.9 | -12.1 | -6.7 | -4.7 |
 
-OKX starts in September 2020 and KuCoin in August 2021, so their discovery samples are shorter than Binance's. No venue turns the discovery result positive at any X.
+OKX starts in September 2020 and KuCoin in August 2021, so their discovery samples are shorter than Binance's. No venue turns the discovery result positive at any X. On the last 90 days the locked X is -0.6 bps on Binance, -2.0 bps on OKX, +1.6 bps on KuCoin. The venues disagree on at most 1.4% of those fills, and that handful of fills plus slightly different closing prices is enough to move the mean across zero.
 
 ## How far price rose against the short before exit, X = 1%
 
