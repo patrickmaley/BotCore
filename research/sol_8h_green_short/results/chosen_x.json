@@ -1,0 +1,26 @@
+{
+  "rule": "argmax over X of mean net return per trade at 12 bps, green short, entry at C close, Binance spot, discovery sample only",
+  "discovery_entries_before_utc": "2026-08-20T16:00:00+00:00",
+  "confirmation_entries_from_utc": "2026-08-20T16:00:00+00:00",
+  "confirmation_entries_to_utc": "2026-11-18T08:00:00+00:00",
+  "chosen_x_pct": 1.0,
+  "discovery_mean_net_12bps_by_x": {
+    "0.3": -0.0014944636640312448,
+    "0.5": -0.0014324784679620479,
+    "0.8": -0.0010729212089595074,
+    "1.0": -0.0010039899374588825,
+    "1.5": -0.0012921929338530216,
+    "2.0": -0.0014619624731771015,
+    "3.0": -0.0013844012148757272
+  },
+  "discovery_t_stat_by_x": {
+    "0.3": -6.294446132213488,
+    "0.5": -4.879565871710834,
+    "0.8": -3.185085950868567,
+    "1.0": -2.7687743906562146,
+    "1.5": -2.9749459347823897,
+    "2.0": -3.0909628323641813,
+    "3.0": -2.6641959431627056
+  },
+  "any_x_positive_after_12bps": false
+}
