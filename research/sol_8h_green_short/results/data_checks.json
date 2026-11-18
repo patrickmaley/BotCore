@@ -1,0 +1,94 @@
+{
+  "t_end_utc": "2026-11-18T16:00:00+00:00",
+  "binance_8h": {
+    "bars": 6872,
+    "first_open_utc": "2020-08-11 00:00:00+00:00",
+    "last_open_utc": "2026-11-18 08:00:00+00:00",
+    "missing_8h_bars": 0,
+    "aligned_to_00_08_16_utc": true,
+    "doji_bars": 26,
+    "green_bars": 3425,
+    "red_bars": 3421
+  },
+  "binance_1m_vs_8h": {
+    "minutes": 3296775,
+    "expected_minutes": 3298560,
+    "bars_with_missing_minutes": 15,
+    "bars_with_no_minutes": 0,
+    "open_mismatch": 15,
+    "high_mismatch": 1,
+    "low_mismatch": 0,
+    "close_mismatch": 0
+  },
+  "stitching": {
+    "binance": {
+      "pairs": 6871,
+      "first_open_utc": "2020-08-11 00:00:00+00:00",
+      "share_n_open_equals_c_close": 0.43559889390190654,
+      "share_equal_last_365d": 0.5041095890410959,
+      "mean_gap_bps": 0.04099622474387844,
+      "median_abs_gap_bps": 0.5478851632689796,
+      "p90_abs_gap_bps": 4.870920603992079,
+      "p99_abs_gap_bps": 23.938085461462617,
+      "max_abs_gap_bps": 137.55817136600123,
+      "median_abs_gap_bps_last_365d": 0.0,
+      "p99_abs_gap_bps_last_365d": 1.4870818120562568
+    },
+    "okx": {
+      "pairs": 6719,
+      "first_open_utc": "2020-09-30 16:00:00+00:00",
+      "share_n_open_equals_c_close": 0.2737014436672124,
+      "share_equal_last_365d": 0.4474885844748858,
+      "mean_gap_bps": -0.03952354293193317,
+      "median_abs_gap_bps": 0.8223684210517668,
+      "p90_abs_gap_bps": 4.640202358632271,
+      "p99_abs_gap_bps": 23.108356852301988,
+      "max_abs_gap_bps": 2158.8594704684315,
+      "median_abs_gap_bps_last_365d": 0.7753140021704574,
+      "p99_abs_gap_bps_last_365d": 2.86037649945383
+    },
+    "kucoin": {
+      "pairs": 5796,
+      "first_open_utc": "2021-08-04 08:00:00+00:00",
+      "share_n_open_equals_c_close": 0.16701173222912352,
+      "share_equal_last_365d": 0.3141552511415525,
+      "mean_gap_bps": 0.23700908519937866,
+      "median_abs_gap_bps": 1.116403730224702,
+      "p90_abs_gap_bps": 4.095982528580233,
+      "p99_abs_gap_bps": 11.489558805014243,
+      "max_abs_gap_bps": 63.501945525292754,
+      "median_abs_gap_bps_last_365d": 1.1433798307791676,
+      "p99_abs_gap_bps_last_365d": 5.320000000001145
+    }
+  },
+  "low_disagreement": {
+    "okx": {
+      "shared_bars": 6720,
+      "mean_bps_vs_binance": 0.5182729671762154,
+      "median_abs_bps": 2.1672017331231253,
+      "p90_abs_bps": 14.950491154288374,
+      "p99_abs_bps": 94.21054783319568,
+      "max_abs_bps": 7873.065648646806,
+      "share_over_10bps": 0.1400297619047619,
+      "share_over_30bps": 0.049107142857142856,
+      "median_abs_bps_last_365d": 1.1931750387783602,
+      "p99_abs_bps_last_365d": 11.923395661095567,
+      "share_over_10bps_last_365d": 0.017351598173515982,
+      "color_disagreement_share": 0.006547619047619048
+    },
+    "kucoin": {
+      "shared_bars": 5797,
+      "mean_bps_vs_binance": -0.6438125723803433,
+      "median_abs_bps": 1.937870691173238,
+      "p90_abs_bps": 8.959682757797362,
+      "p99_abs_bps": 53.193287282586695,
+      "max_abs_bps": 2478.035864724997,
+      "share_over_10bps": 0.08469898223218907,
+      "share_over_30bps": 0.021562877350353633,
+      "median_abs_bps_last_365d": 1.2931591878961868,
+      "p99_abs_bps_last_365d": 10.76813075332595,
+      "share_over_10bps_last_365d": 0.010958904109589041,
+      "color_disagreement_share": 0.005002587545282043
+    }
+  }
+}
