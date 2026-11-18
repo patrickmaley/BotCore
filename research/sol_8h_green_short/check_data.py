@@ -95,6 +95,13 @@ def main() -> None:
             "color_disagreement_share": float(
                 ((jj["close"] > jj["open"]) != (jj["close_o"] > jj["open_o"])).mean()
             ),
+            "share_over_30bps_by_year": {
+                str(y): float(v) for y, v in (d.abs() > 30).groupby(pd.to_datetime(jj.index, unit="ms").year).mean().items()
+            },
+            "largest_gaps": [
+                {"candle_open_utc": str(pd.Timestamp(int(i), unit="ms"))[:16], "low_gap_bps": float(d[i])}
+                for i in d.abs().sort_values(ascending=False).head(5).index
+            ],
         }
     out["low_disagreement"] = lows
 
