@@ -47,7 +47,10 @@ def load_pairs(venue: str, stage: str, meta: dict) -> pd.DataFrame:
     return pairs
 
 
-def run_grid(stage: str) -> tuple[pd.DataFrame, pd.DataFrame]:
+def run_grid(stage: str, targets: list[tuple[float, dict]] | None = None) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """targets: (value written to column `x`, keyword for simulate). Defaults to the percent grid."""
+    if targets is None:
+        targets = [(x, {"x_pct": x}) for x in X_GRID]
     meta = load_meta()
     rows: list[dict] = []
     tests: list[dict] = []
@@ -57,8 +60,8 @@ def run_grid(stage: str) -> tuple[pd.DataFrame, pd.DataFrame]:
         strats = strategy_defs(pairs)
         body = pairs["body_pct"].to_numpy()
         for entry_mode in ENTRY_MODES:
-            for x in X_GRID:
-                sims = {side: simulate(pairs, x, side, entry_mode) for side in ("short", "long")}
+            for x, target in targets:
+                sims = {side: simulate(pairs, side=side, entry_mode=entry_mode, **target) for side in ("short", "long")}
                 for pname, pmask in masks.items():
                     n_bars = int(pmask.sum())
                     base = {"venue": venue, "entry_mode": entry_mode, "period": pname, "x": x}

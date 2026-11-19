@@ -62,7 +62,7 @@ def headline(grid: pd.DataFrame, tests: pd.DataFrame, x: float, meta: dict) -> d
     return out
 
 
-def excursions(x: float, meta: dict) -> tuple[pd.DataFrame, pd.DataFrame]:
+def excursions(target: dict, meta: dict) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Per-trade adverse excursion and holding time for the green short, from 1m bars."""
     pairs = build_pairs(load_8h("binance"))
     pairs = pairs[pairs["green"]].reset_index(drop=True)
@@ -72,7 +72,7 @@ def excursions(x: float, meta: dict) -> tuple[pd.DataFrame, pd.DataFrame]:
     conf_start = meta["t_end_ms"] - CONFIRM_DAYS * 86_400_000
     rows = []
     for mode in ("c_close", "n_open"):
-        sim = simulate(pairs, x, "short", mode)
+        sim = simulate(pairs, side="short", entry_mode=mode, **target)
         for i in range(len(pairs)):
             t0 = int(pairs.at[i, "n_open_time_ms"])
             a, b = np.searchsorted(t1, t0), np.searchsorted(t1, t0 + 8 * 3600 * 1000)
@@ -155,11 +155,12 @@ def venue_agreement(meta: dict) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def last_trades(x: float, n: int = 30) -> pd.DataFrame:
+def last_trades(target: dict, n: int = 30) -> pd.DataFrame:
     pairs = build_pairs(load_8h("binance"))
     pairs = pairs[pairs["green"]].reset_index(drop=True)
-    a = simulate(pairs, x, "short", "c_close")
-    b = simulate(pairs, x, "short", "n_open")
+    a = simulate(pairs, side="short", entry_mode="c_close", **target)
+    b = simulate(pairs, side="short", entry_mode="n_open", **target)
+    x = target.get("x_pct", np.nan)
     tz = "America/Phoenix"
     fmt = "%Y-%m-%d %H:%M"
     out = pd.DataFrame({
@@ -168,6 +169,7 @@ def last_trades(x: float, n: int = 30) -> pd.DataFrame:
         "body_pct": pairs["body_pct"],
         "entry": a["entry"],
         "x_pct": x,
+        "tp_distance_pct_of_entry": (a["entry"] - a["tp"]) / a["entry"] * 100.0,
         "take_profit": a["tp"],
         "n_open": pairs["n_open"],
         "n_low": pairs["n_low"],
@@ -180,13 +182,13 @@ def last_trades(x: float, n: int = 30) -> pd.DataFrame:
     return out.tail(n).iloc[::-1].reset_index(drop=True)
 
 
-def bootstrap(x: float, meta: dict) -> pd.DataFrame:
+def bootstrap(target: dict, meta: dict) -> pd.DataFrame:
     pairs = build_pairs(load_8h("binance"))
     conf_start = meta["t_end_ms"] - CONFIRM_DAYS * 86_400_000
     rng = np.random.default_rng(SEED)
     rows = []
     for mode in ("c_close", "n_open"):
-        sim = simulate(pairs, x, "short", mode)
+        sim = simulate(pairs, side="short", entry_mode=mode, **target)
         net = net_return(sim["gross"].to_numpy(), sim["exit_ratio"].to_numpy(), BASE_COST_BPS)
         for sample, pm in (("discovery", pairs["entry_time_ms"] < conf_start),
                            ("confirmation", pairs["entry_time_ms"] >= conf_start)):
@@ -217,7 +219,8 @@ def main() -> None:
     (RESULTS / "confirmation_headline.json").write_text(json.dumps(head, indent=2) + "\n")
     print(json.dumps(head, indent=2))
 
-    trades, summ = excursions(x, meta)
+    target = {"x_pct": x}
+    trades, summ = excursions(target, meta)
     n_bars_all = len(build_pairs(load_8h("binance")))
     conf_bars = CONFIRM_DAYS * 3
     for i, r in summ.iterrows():
@@ -227,8 +230,8 @@ def main() -> None:
     trades.to_csv(RESULTS / "excursion_trades.csv", index=False)
     summ.to_csv(RESULTS / "excursion_summary.csv", index=False)
     venue_agreement(meta).to_csv(RESULTS / "venue_tp_agreement.csv", index=False)
-    last_trades(x).to_csv(RESULTS / "last_30_green_shorts.csv", index=False)
-    bootstrap(x, meta).to_csv(RESULTS / "bootstrap_chosen_x.csv", index=False)
+    last_trades(target).to_csv(RESULTS / "last_30_green_shorts.csv", index=False)
+    bootstrap(target, meta).to_csv(RESULTS / "bootstrap_chosen_x.csv", index=False)
 
 
 if __name__ == "__main__":

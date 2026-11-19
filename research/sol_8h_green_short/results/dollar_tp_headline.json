@@ -1,0 +1,34 @@
+{
+  "tp_abs_usdt": 1.0,
+  "discovery_green_mean_12bps": -0.0016292436847948843,
+  "discovery_green_ci": [
+    -0.0025953708235254384,
+    -0.00066311654606433
+  ],
+  "discovery_red_mean_12bps": -0.001424385992817014,
+  "last90_green_mean_12bps": -0.00018505900842783797,
+  "last90_green_ci": [
+    -0.0023686609230506644,
+    0.0019985429061949887
+  ],
+  "last90_red_mean_12bps": -0.0022571911555549704,
+  "last90_profitable_after_12bps": false,
+  "last90_ci_excludes_zero": false,
+  "last90_baselines_beaten": [
+    "red_short",
+    "all_short",
+    "random_half_short",
+    "green_long_flipped"
+  ],
+  "discovery_baselines_beaten": [],
+  "last90_green_minus_red": 0.0020721321471271325,
+  "last90_green_minus_red_ci": [
+    -0.0011981957318344845,
+    0.0053424600260887495
+  ],
+  "last90_by_venue": {
+    "binance": -0.00018505900842783797,
+    "okx": -0.0003180566264702164,
+    "kucoin": -0.0001286110185904053
+  }
+}

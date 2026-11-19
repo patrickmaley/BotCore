@@ -13,9 +13,9 @@ def candles(rows):
     return df
 
 
-def one(c, n, x, side="short", entry_mode="c_close"):
+def one(c, n, x=None, side="short", entry_mode="c_close", tp_abs=None):
     p = build_pairs(candles([c, n]))
-    return simulate(p, x, side, entry_mode).iloc[0]
+    return simulate(p, x, side, entry_mode, tp_abs=tp_abs).iloc[0]
 
 
 def close(a, b):
@@ -58,6 +58,28 @@ def main():
     assert r.outcome == "gap" and close(r.exit, 101.5) and close(r.gross, 0.015)
     r = one(green, (100.0, 100.9, 97.0, 98.0), 1.0, side="long")
     assert r.outcome == "expire" and close(r.gross, -0.02)
+
+    # Fixed-dollar take-profit: one dollar below a 100.00 entry is 99.00, below a 50.00 entry is 49.00.
+    r = one(green, (100.0, 100.5, 98.9, 100.2), tp_abs=1.0)
+    assert r.outcome == "tp" and close(r.tp, 99.0) and close(r.exit, 99.0) and close(r.gross, 0.01)
+    r = one((49.0, 51.0, 48.0, 50.0), (50.0, 50.5, 48.9, 50.2), tp_abs=1.0)
+    assert r.outcome == "tp" and close(r.tp, 49.0) and close(r.gross, 0.02)
+    r = one((49.0, 51.0, 48.0, 50.0), (50.0, 50.5, 49.01, 50.4), tp_abs=1.0)
+    assert r.outcome == "expire" and close(r.gross, -0.008)
+    r = one(green, (98.9, 99.5, 98.0, 99.2), tp_abs=1.0)
+    assert r.outcome == "gap" and close(r.exit, 98.9)
+    r = one(green, (100.2, 100.5, 99.1, 100.2), tp_abs=1.0, entry_mode="n_open")
+    assert close(r.tp, 99.2) and r.outcome == "tp"
+    r = one(green, (100.0, 101.0, 99.0, 100.2), tp_abs=1.0, side="long")
+    assert r.outcome == "tp" and close(r.exit, 101.0)
+    # Below a one-dollar price the target is unreachable and the trade is a one-candle hold.
+    r = one((0.7, 0.9, 0.6, 0.8), (0.8, 0.85, 0.5, 0.6), tp_abs=1.0)
+    assert r.outcome == "expire" and close(r.gross, 0.25)
+    try:
+        one(green, green, 1.0, tp_abs=1.0)
+        raise AssertionError("both targets accepted")
+    except ValueError:
+        pass
 
     # Costs: 12 bps round trip = 6 bps on entry notional + 6 bps on exit notional.
     net = net_return(np.array([0.01]), np.array([0.99]), 12)

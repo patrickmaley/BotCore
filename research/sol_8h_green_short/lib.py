@@ -56,10 +56,19 @@ def build_pairs(df: pd.DataFrame) -> pd.DataFrame:
     return d.reset_index(drop=True)
 
 
-def simulate(pairs: pd.DataFrame, x_pct: float, side: str = "short", entry_mode: str = "c_close") -> pd.DataFrame:
+def simulate(
+    pairs: pd.DataFrame,
+    x_pct: float | None = None,
+    side: str = "short",
+    entry_mode: str = "c_close",
+    tp_abs: float | None = None,
+) -> pd.DataFrame:
     """Apply the one-candle take-profit rule to every row of `pairs`.
 
-    side        'short': cover X% below entry.  'long': sell X% above entry.
+    The take-profit distance is either x_pct (percent of entry) or tp_abs
+    (a fixed amount of quote currency, e.g. 1.0 = one dollar). Give exactly one.
+
+    side        'short': cover that far below entry.  'long': sell that far above entry.
     entry_mode  'c_close': enter at C's close.  'n_open': enter at N's open.
 
     outcome: 'gap' (N opened through the take-profit, filled at N's open),
@@ -69,12 +78,15 @@ def simulate(pairs: pd.DataFrame, x_pct: float, side: str = "short", entry_mode:
     entry = (pairs["close"] if entry_mode == "c_close" else pairs["n_open"]).to_numpy(float)
     n_open = pairs["n_open"].to_numpy(float)
     n_close = pairs["n_close"].to_numpy(float)
+    if (x_pct is None) == (tp_abs is None):
+        raise ValueError("give exactly one of x_pct and tp_abs")
+    dist = entry * x_pct / 100.0 if tp_abs is None else np.full_like(entry, tp_abs)
     if side == "short":
-        tp = entry * (1.0 - x_pct / 100.0)
+        tp = entry - dist
         gap = n_open <= tp
         touch = ~gap & (pairs["n_low"].to_numpy(float) <= tp)
     elif side == "long":
-        tp = entry * (1.0 + x_pct / 100.0)
+        tp = entry + dist
         gap = n_open >= tp
         touch = ~gap & (pairs["n_high"].to_numpy(float) >= tp)
     else:
