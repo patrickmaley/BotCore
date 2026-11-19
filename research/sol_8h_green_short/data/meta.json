@@ -1,0 +1,19 @@
+{
+  "fetched_at_utc": "2026-11-18T21:01:19.094000+00:00",
+  "last_completed_8h_close_utc": "2026-11-18T16:00:00+00:00",
+  "t_end_ms": 1795017600000,
+  "binance_first_8h_open_utc": "2020-08-11T00:00:00+00:00",
+  "okx_first_8h_open_utc": "2020-09-30T08:00:00+00:00",
+  "kucoin_first_8h_open_utc": "2021-08-04T08:00:00+00:00",
+  "jupiter_perps_sol_pool_info": {
+    "longAvailableLiquidity": "10000000.00",
+    "longBorrowRatePercent": "0.0015",
+    "longUtilizationPercent": "10.68",
+    "shortAvailableLiquidity": "10000000.00",
+    "shortBorrowRatePercent": "0.0007",
+    "shortUtilizationPercent": "60.30",
+    "openFeePercent": "0.06",
+    "maxRequestExecutionSec": "45",
+    "maxPriceImpactFeePercent": "0.44"
+  }
+}

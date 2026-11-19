@@ -1,0 +1,90 @@
+{
+  "rule": "don_20",
+  "mode": "long_flat",
+  "score_min_sharpe": 0.9904599897895955,
+  "proceed_to_holdout": true,
+  "discovery_sharpe": {
+    "SOL": 1.4670416565758695,
+    "BTC": 1.030851761503888,
+    "ETH": 0.9904599897895955
+  },
+  "discovery_detail": {
+    "SOL": {
+      "days": 1403,
+      "wiped_out": false,
+      "total_return": 26.914507846646387,
+      "cagr": 1.3776203522099544,
+      "ann_vol": 0.8111194207347839,
+      "sharpe": 1.4670416565758695,
+      "max_drawdown": 0.7169384401176484,
+      "trades": 22,
+      "win_rate": 0.45454545454545453,
+      "avg_win": 0.9090289797927369,
+      "avg_loss": -0.14210778938240928,
+      "best_trade": 3.0843655199605715,
+      "worst_trade": -0.262935260115607,
+      "median_days_held": 29.0,
+      "time_in_market": 0.5210263720598717,
+      "worst_adverse_move": 0.0,
+      "sharpe_ci": [
+        0.18424742078926465,
+        2.6796581641575457
+      ],
+      "shift_test_p": 0.017964071856287425,
+      "first_day": "2021-02-28",
+      "last_day": "2025-01-01"
+    },
+    "BTC": {
+      "days": 2492,
+      "wiped_out": false,
+      "total_return": 11.830910775221877,
+      "cagr": 0.45319880783696087,
+      "ann_vol": 0.46798966131949926,
+      "sharpe": 1.030851761503888,
+      "max_drawdown": 0.584405808129246,
+      "trades": 38,
+      "win_rate": 0.42105263157894735,
+      "avg_win": 0.39318471001181565,
+      "avg_loss": -0.09324090102644539,
+      "best_trade": 1.751990253632369,
+      "worst_trade": -0.22343447987957432,
+      "median_days_held": 26.5,
+      "time_in_market": 0.5533707865168539,
+      "worst_adverse_move": 0.0,
+      "sharpe_ci": [
+        0.21500366353358505,
+        1.8279693024688701
+      ],
+      "shift_test_p": 0.00998003992015968,
+      "first_day": "2018-03-07",
+      "last_day": "2025-01-01"
+    },
+    "ETH": {
+      "days": 2492,
+      "wiped_out": false,
+      "total_return": 16.090989084706425,
+      "cagr": 0.5155204762865939,
+      "ann_vol": 0.6042116953501179,
+      "sharpe": 0.9904599897895955,
+      "max_drawdown": 0.5701847796937258,
+      "trades": 37,
+      "win_rate": 0.43243243243243246,
+      "avg_win": 0.47076949044014205,
+      "avg_loss": -0.10173029664334354,
+      "best_trade": 3.2064673831372135,
+      "worst_trade": -0.22762884433399488,
+      "median_days_held": 29.0,
+      "time_in_market": 0.5108346709470305,
+      "worst_adverse_move": 0.0,
+      "sharpe_ci": [
+        0.19379681685274497,
+        1.734159706415629
+      ],
+      "shift_test_p": 0.015968063872255488,
+      "first_day": "2018-03-07",
+      "last_day": "2025-01-01"
+    }
+  },
+  "positive_configs_all_assets": 29,
+  "configs": 32
+}

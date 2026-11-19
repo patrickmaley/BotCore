@@ -1,0 +1,39 @@
+{
+  "rule": "don_20",
+  "mode": "long_flat",
+  "verdict": "discard",
+  "sol_holdout": {
+    "total_return": -0.4621767195123514,
+    "cagr": -0.28107858830460597,
+    "sharpe": -0.5026827190149071,
+    "max_drawdown": 0.552269258739785,
+    "trades": 13,
+    "win_rate": 0.15384615384615385,
+    "avg_win": 0.19382585707201738,
+    "avg_loss": -0.08252651586767659
+  },
+  "sol_holdout_sharpe_ci": [
+    -1.8800360283150046,
+    0.8542962528848707
+  ],
+  "sol_holdout_shift_test_p": 0.6606786427145709,
+  "holdout_total_return": {
+    "SOL": -0.4621767195123514,
+    "BTC": -0.2145871041845,
+    "ETH": 0.27241382984714413
+  },
+  "holdout_buy_and_hold": {
+    "SOL": -0.6034207701653374,
+    "BTC": -0.306540091476447,
+    "ETH": -0.4538653440310626
+  },
+  "assets_positive": 1,
+  "sol_positive_fill_8h_late": false,
+  "sol_positive_doubled_costs": false,
+  "holdout_configs_positive_on_sol": 7,
+  "configs": 32,
+  "sol_position_now": 0,
+  "sol_last_close": 75.19,
+  "sol_n_day_high_close": 96.38,
+  "sol_n_day_low_close": 70.28
+}
