@@ -1,0 +1,42 @@
+{
+  "picked_rule": "don_20",
+  "criteria_outcome": {
+    "picked": "discard",
+    "vote": "watch"
+  },
+  "sol_state": {
+    "picked": {
+      "position": -1,
+      "since_phoenix": "2026-10-08 17:00",
+      "price_then": 109.62,
+      "last_close": 75.19,
+      "signals_long": 1,
+      "signals_short": 15
+    },
+    "vote": {
+      "position": -1,
+      "since_phoenix": "2026-10-22 17:00",
+      "price_then": 103.65,
+      "last_close": 75.19,
+      "signals_long": 1,
+      "signals_short": 15
+    }
+  },
+  "holdout": {
+    "picked": {
+      "SOL": -0.5404995623051039,
+      "BTC": -0.2372029856892992,
+      "ETH": 1.0855706029750238
+    },
+    "vote": {
+      "SOL": 0.06011966812221714,
+      "BTC": 0.2791367465640384,
+      "ETH": 0.7890224177271132
+    }
+  },
+  "long_short_configs_positive": {
+    "SOL": 7,
+    "BTC": 5,
+    "ETH": 11
+  }
+}
