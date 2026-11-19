@@ -5,6 +5,62 @@ import numpy as np
 import pandas as pd
 
 from lib import MS_8H, build_pairs, max_drawdown, net_return, simulate, trade_stats
+from path_sim import Minutes, run_trade
+
+
+def minutes(rows, start=0):
+    a = np.array(rows, dtype=float)
+    return Minutes(start + np.arange(len(a), dtype=np.int64) * 60_000, a[:, 0], a[:, 1], a[:, 2], a[:, 3])
+
+
+def path_tests():
+    flat = (100.0, 100.1, 99.9, 100.0)
+    kw = dict(size=10.0, leverage=15.0)
+    fee = lambda entry, exit_, units=10.0: 0.0006 * units * (entry + exit_)
+
+    # Target one dollar below: filled at the limit, not at the low.
+    r = run_trade(minutes([flat, (100.0, 100.2, 98.5, 98.8), flat]), 0, 100.0, target=1.0, **kw)
+    assert r["outcome"] == "tp" and close(r["exit"], 99.0) and close(r["usd"], 10.0 - fee(100.0, 99.0))
+    # Entry minute opens through the target: filled at that open.
+    r = run_trade(minutes([(98.7, 98.9, 98.5, 98.8), flat]), 0, 100.0, target=1.0, **kw)
+    assert r["outcome"] == "tp" and close(r["exit"], 98.7)
+    # Never reached: closed at the last close inside the hold window (2 minutes of data inside one 8h candle).
+    r = run_trade(minutes([flat, (100.0, 100.6, 99.5, 100.4)]), 0, 100.0, target=1.0, **kw)
+    assert r["outcome"] == "expire" and close(r["exit"], 100.4) and close(r["usd"], -4.0 - fee(100.0, 100.4))
+    # Stop two dollars above: filled at the stop.
+    r = run_trade(minutes([flat, (100.0, 102.5, 99.8, 102.2), flat]), 0, 100.0, target=1.0, stop=2.0, **kw)
+    assert r["outcome"] == "stop" and close(r["exit"], 102.0) and close(r["usd"], -20.0 - fee(100.0, 102.0))
+    # A minute that opens above the stop fills at its open.
+    r = run_trade(minutes([flat, (102.6, 102.9, 102.4, 102.7)]), 0, 100.0, target=1.0, stop=2.0, **kw)
+    assert r["outcome"] == "stop" and close(r["exit"], 102.6)
+    # Same minute reaches stop and target: the stop is assumed first.
+    r = run_trade(minutes([flat, (100.0, 102.1, 98.9, 100.0)]), 0, 100.0, target=1.0, stop=2.0, **kw)
+    assert r["outcome"] == "stop" and r["ambiguous_minute"]
+    # Liquidation at 15x: 100 x (1 + 1/15 - 0.0006 - 0.002) = 106.4067. Loses collateral plus the open fee.
+    r = run_trade(minutes([flat, (100.0, 106.5, 99.9, 106.0), (106.0, 106.1, 98.0, 98.5)]), 0, 100.0, target=1.0, **kw)
+    assert r["outcome"] == "liquidated" and close(r["usd"], -1000.0 * (1 / 15 + 0.0006))
+    r = run_trade(minutes([flat, (100.0, 106.3, 99.9, 106.0), (106.0, 106.1, 98.0, 98.5)]), 0, 100.0, target=1.0, **kw)
+    assert r["outcome"] == "tp"
+    # A stop beyond the liquidation level never fills.
+    r = run_trade(minutes([flat, (100.0, 108.0, 99.9, 107.0)]), 0, 100.0, target=1.0, stop=7.0, **kw)
+    assert r["outcome"] == "liquidated"
+    # Add 10 more at +2: average entry 101, new target 100. Both legs covered at 100.
+    r = run_trade(minutes([flat, (100.0, 102.3, 99.9, 102.0), (102.0, 102.1, 99.5, 99.8)]), 0, 100.0, target=1.0, add=2.0, **kw)
+    assert r["outcome"] == "tp" and r["added"] and close(r["exit"], 100.0)
+    assert close(r["usd"], 0.0 + 20.0 - 0.0006 * (1000.0 + 1020.0 + 2000.0))
+    # Added, then never came back: both legs closed at the last close.
+    r = run_trade(minutes([flat, (100.0, 102.3, 99.9, 102.0), (102.0, 103.2, 101.5, 103.0)]), 0, 100.0, target=1.0, add=2.0, **kw)
+    assert r["outcome"] == "expire" and close(r["usd"], -30.0 - 10.0 - 0.0006 * (1000.0 + 1020.0 + 2060.0))
+    # Hold window: one candle ends the trade at the 8h boundary, no limit carries on to the target.
+    m = Minutes(np.array([0, 60_000, MS_8H], dtype=np.int64), *(np.array(x, dtype=float) for x in
+                ([100.0, 100.0, 100.5], [100.1, 100.6, 100.6], [99.9, 99.9, 98.9], [100.0, 100.5, 99.0])))
+    r = run_trade(m, 0, 100.0, target=1.0, **kw)
+    assert r["outcome"] == "expire" and close(r["exit"], 100.5) and r["exit_time_ms"] == 120_000
+    r = run_trade(m, 0, 100.0, target=1.0, hold_candles=None, **kw)
+    assert r["outcome"] == "tp" and r["exit_time_ms"] == MS_8H
+    # Borrow: 0.001% per hour on 1000 dollars, target reached in the minute that opens one hour after entry.
+    r = run_trade(minutes([flat] * 60 + [(100.0, 100.1, 98.9, 99.0)]), 0, 100.0, target=1.0, borrow_per_hour=1e-5, **kw)
+    assert r["outcome"] == "tp" and close(r["hold_hours"], 1.0) and close(r["usd"], 10.0 - fee(100.0, 99.0) - 0.01)
 
 
 def candles(rows):
@@ -103,6 +159,7 @@ def main():
     assert close(s["win_rate"], 0.5) and close(s["avg_win"], 0.015) and close(s["avg_loss"], -0.02)
     assert close(s["profit_factor"], 0.75) and close(s["bars_in_position"], 0.5)
 
+    path_tests()
     print("all rule tests passed")
 
 
