@@ -35,8 +35,9 @@ def main() -> None:
     grid.to_csv(RESULTS / "discovery_grid.csv", index=False)
 
     cand = grid[~grid.rule.isin(["vote", "buy_and_hold"])]
-    sh = cand.pivot_table(index=["rule", "mode"], columns="asset", values="sharpe")[list(ASSETS)]
-    sh["score"] = sh.min(axis=1)
+    sh = cand.pivot_table(index=["rule", "mode"], columns="asset", values="sharpe", dropna=False)[list(ASSETS)]
+    # A configuration that lost all its equity on any asset has no Sharpe and scores last.
+    sh["score"] = sh[list(ASSETS)].min(axis=1, skipna=False).fillna(-np.inf)
     sh["n"] = [int(r.split("_")[1]) for r, _ in sh.index]
     sh = sh.sort_values(["score", "n"], ascending=False)
     (rule, mode), best = sh.index[0], sh.iloc[0]

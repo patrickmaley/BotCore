@@ -142,6 +142,9 @@ def backtest(close: np.ndarray, pos: np.ndarray, start: int, end: int | None = N
 
 
 def sharpe(eq: np.ndarray) -> float:
+    """Annualised Sharpe ratio of daily returns. NaN if equity was wiped out."""
+    if eq.min() <= 0:
+        return float("nan")
     r = eq[1:] / eq[:-1] - 1.0
     sd = r.std(ddof=1)
     return float(r.mean() / sd * np.sqrt(365.0)) if sd > 0 else 0.0
@@ -153,14 +156,17 @@ def max_drawdown(eq: np.ndarray) -> float:
 
 def stats(eq: np.ndarray, trades: list[dict]) -> dict:
     days = len(eq) - 1
-    r = eq[1:] / eq[:-1] - 1.0
+    bust = bool(eq.min() <= 0)
+    live = eq[: int(np.argmax(eq <= 0)) + 1] if bust else eq
+    r = live[1:] / live[:-1] - 1.0
+    r = r[np.isfinite(r)]
     tr = pd.DataFrame(trades)
     closed = tr[~tr.open] if len(tr) else tr
     wins = closed.ret[closed.ret > 0] if len(closed) else pd.Series(dtype=float)
     losses = closed.ret[closed.ret <= 0] if len(closed) else pd.Series(dtype=float)
     in_market = tr.days.sum() if len(tr) else 0
     return {
-        "days": days, "total_return": eq[-1] - 1.0,
+        "days": days, "wiped_out": bust, "total_return": eq[-1] - 1.0,
         "cagr": eq[-1] ** (365.0 / days) - 1.0 if eq[-1] > 0 else -1.0,
         "ann_vol": float(r.std(ddof=1) * np.sqrt(365.0)), "sharpe": sharpe(eq), "max_drawdown": max_drawdown(eq),
         "trades": len(closed), "win_rate": float((closed.ret > 0).mean()) if len(closed) else np.nan,

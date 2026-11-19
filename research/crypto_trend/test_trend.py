@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 import trend
-from trend import DAY_MS, MS_8H, apply_mode, backtest, daily_bars, max_drawdown, signals, stats
+from trend import DAY_MS, MS_8H, apply_mode, backtest, daily_bars, max_drawdown, sharpe, signals, stats
 
 
 def close(a, b, tol=1e-12):
@@ -66,6 +66,10 @@ def main():
     # Start index: nothing is traded before it and equity starts at 1.
     eq, _ = backtest(px, np.array([1, 1, 1, 0]), 1, 3, fee=0.0)
     assert np.allclose(eq, [1.0, 110.0 / 105.0, 99.0 / 105.0])
+
+    # A 1x short is wiped out when price doubles; equity stays at zero and the Sharpe is undefined.
+    eq, _ = backtest(np.array([100.0, 150.0, 210.0, 100.0]), np.array([-1, -1, -1, -1]), 0, 3, fee=0.0)
+    assert np.allclose(eq, [1.0, 0.5, 0.0, 0.0]) and np.isnan(sharpe(eq)) and stats(eq, [])["wiped_out"]
 
     assert close(max_drawdown(np.array([1.0, 1.2, 0.9, 1.5])), 0.25)
     st = stats(*backtest(px, np.array([1, 1, 0, 0]), 0, 3, fee=0.0))
