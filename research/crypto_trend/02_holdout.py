@@ -153,6 +153,13 @@ def main() -> None:
     hold_from = pd.Timestamp(DISCOVERY_END_MS, unit="ms", tz="UTC")
     A("# Trend following on SOL, BTC and ETH\n")
     A(f"Protocol: `PROTOCOL.md`. Verdict by its rules: **{verdict}**.\n")
+    dd = lock["discovery_detail"]["SOL"]
+    A(f"On discovery data ({dd['first_day']} to {dd['last_day']}) the locked rule returned {pct(dd['total_return'], 0)} on SOL after costs, "
+      f"with a Sharpe ratio of {dd['sharpe']:.2f} and a worst drawdown of {pct(-dd['max_drawdown'], 0)}. "
+      f"On the holdout it returned {pct(sol.total_return)} on SOL, {pct(get('BTC', 'locked rule').total_return)} on BTC and "
+      f"{pct(get('ETH', 'locked rule').total_return)} on ETH. It lost less than buy and hold on all three and made money on "
+      f"{n_pos} of them.\n")
+    assert all(get(a, "locked rule").total_return > get(a, "buy and hold (spot)").total_return for a in ASSETS)
     A("## The rule\n")
     A(f"At each daily close (00:00 UTC, 5:00 PM in Phoenix): if the close is the highest close of the last {n} days, be long. "
       f"If it is the lowest close of the last {n} days, be in cash. Otherwise do nothing. No target, no stop, 1x notional.\n")
