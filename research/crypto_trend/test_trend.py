@@ -63,6 +63,9 @@ def main():
     # Worst adverse move of a short uses the highs after entry.
     _, tr = backtest(px, np.array([-1, -1, 0, 0]), 0, 3, fee=0.0, high=np.array([101.0, 112.0, 111.0, 100.0]), low=px - 1)
     assert close(tr[0]["worst_adverse"], 0.12)
+    # For a long it is the fall from entry to the lowest low after entry: 100 -> 90 is 10%.
+    _, tr = backtest(px, np.array([1, 1, 0, 0]), 0, 3, fee=0.0, high=px + 1, low=np.array([80.0, 90.0, 104.0, 50.0]))
+    assert close(tr[0]["worst_adverse"], 0.10)
     # Start index: nothing is traded before it and equity starts at 1.
     eq, _ = backtest(px, np.array([1, 1, 1, 0]), 1, 3, fee=0.0)
     assert np.allclose(eq, [1.0, 110.0 / 105.0, 99.0 / 105.0])

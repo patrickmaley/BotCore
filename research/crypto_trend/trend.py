@@ -117,7 +117,7 @@ def backtest(close: np.ndarray, pos: np.ndarray, start: int, end: int | None = N
             carry = notional * rate * 24.0 * (t - t0)
             e = e0 + side * notional * (close[t] / p0 - 1.0) - carry
             if high is not None and t > t0:
-                worst = max(worst, (p0 / low[t] - 1.0) if side > 0 else (high[t] / p0 - 1.0))
+                worst = max(worst, (1.0 - low[t] / p0) if side > 0 else (high[t] / p0 - 1.0))
         eq[t - start] = e
         if t == end or e <= 0:
             if e <= 0:
